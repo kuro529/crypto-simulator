@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>⚡ CryptoSignal</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #07070f; color: #dde; font-family: -apple-system, sans-serif; min-height: 100vh; padding-bottom: 48px; }
+.header { display: flex; justify-content: space-between; align-items: flex-start; padding: 18px 16px 12px; border-bottom: 1px solid #12121f; flex-wrap: wrap; gap: 10px; position: sticky; top: 0; background: #07070f; z-index: 100; }
+.title { font-size: 20px; font-weight: 800; color: #fff; }
+.subtitle { font-size: 11px; color: #383848; margin-top: 3px; }
+.controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+select { background: #0d0d1a; border: 1px solid #222236; color: #aaa; border-radius: 7px; padding: 5px 10px; font-size: 13px; }
+.btn { padding: 6px 14px; border-radius: 8px; border: 1px solid #00e5a044; background: #00e5a010; color: #00e5a0; cursor: pointer; font-size: 13px; }
+.btn-notif { padding: 6px 14px; border-radius: 8px; border: 1px solid #5577ff44; background: #5577ff10; color: #5577ff; cursor: pointer; font-size: 13px; }
+.btn-notif.on { background: #5577ff30; border-color: #5577ff; }
+.add-bar { display: flex; gap: 8px; padding: 10px 16px; background: #0d0d1a; border-bottom: 1px solid #12121f; align-items: center; flex-wrap: wrap; }
+.add-bar input { flex: 1; min-width: 120px; background: #07070f; border: 1px solid #222236; color: #ccc; border-radius: 7px; padding: 6px 12px; font-size: 13px; }
+.popular { display: flex; gap: 6px; flex-wrap: wrap; padding: 8px 16px; border-bottom: 1px solid #0f0f1c; }
+.popular-btn { padding: 4px 10px; border-radius: 6px; border: 1px solid #222236; background: transparent; color: #666; cursor: pointer; font-size: 12px; }
+.popular-btn.active { border-color: #00e5a044; color: #00e5a0; background: #00e5a010; }
+.legend { display: flex; gap: 12px; padding: 8px 16px; font-size: 12px; border-bottom: 1px solid #0f0f1c; flex-wrap: wrap; align-items: center; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 12px; padding: 14px 16px; }
+.card { background: #0d0d1a; border: 1px solid #12121f; border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.card-header { display: flex; justify-content: space-between; align-items: flex-start; }
+.pair-name { font-weight: 700; font-size: 16px; color: #fff; }
+.price { font-weight: 700; font-size: 20px; color: #fff; font-variant-numeric: tabular-nums; }
+.x-btn { background: none; border: none; color: #ff8c00; cursor: pointer; font-size: 20px; }
+.badge { border-radius: 9px; padding: 9px 12px; display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }
+.badge-type { font-weight: 800; font-size: 16px; }
+.badge-strength { border-radius: 4px; padding: 1px 6px; font-size: 10px; font-weight: 700; }
+.badge-reason { font-size: 11px; opacity: 0.8; width: 100%; margin-top: 2px; }
+.badge-details { font-size: 10px; width: 100%; margin-top: 2px; color: #666; }
+.ind-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px 10px; }
+.ind-row { display: flex; justify-content: space-between; border-bottom: 1px solid #0f0f1c; padding-bottom: 3px; }
+.ind-label { color: #444; font-size: 11px; }
+.ind-val { color: #888; font-size: 12px; font-variant-numeric: tabular-nums; }
+.score-bar-track { background: #1a1a2e; border-radius: 4px; height: 8px; overflow: hidden; margin: 4px 0; }
+.score-bar-fill { height: 100%; border-radius: 4px; transition: width 0.4s; }
+.hist { border-top: 1px solid #12121f; padding-top: 8px; }
+.hist-label { color: #333; font-size: 10px; margin-bottom: 5px; }
+.hist-row { display: flex; align-items: center; margin-bottom: 4px; font-size: 11px; gap: 6px; flex-wrap: wrap; }
+.loading { color: #2a2a44; text-align: center; padding: 24px; font-size: 13px; }
+.error { color: #ff4d6d; font-size: 12px; }
+.footer { text-align: center; color: #222236; font-size: 10px; padding: 16px; }
+.hidden { display: none; }
+.log-panel { padding: 16px; border-top: 1px solid #12121f; }
+.log-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid #0f0f1c; flex-wrap: wrap; }
+.toast-wrap { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 8px; width: 90%; max-width: 360px; pointer-events: none; }
+.toast { border-radius: 12px; padding: 12px 16px; font-size: 13px; box-shadow: 0 4px 24px #0008; animation: slideIn 0.3s ease; pointer-events: auto; }
+.toast.buy { background: #00e5a0ee; color: #000; }
+.toast.sell { background: #ff4d6dee; color: #fff; }
+.toast-pair { font-weight: 800; font-size: 15px; }
+.toast-detail { font-size: 12px; margin-top: 2px; opacity: 0.85; }
+@keyframes slideIn { from { opacity: 0; transform: translateY(-16px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes slideOut { from { opacity: 1; } to { opacity: 0; transform: translateY(-8px); } }
+.position-divider { border-top: 1px dashed #ffffff33; width: 100%; margin: 8px 0 4px; }
+.position-row { display: flex; justify-content: space-between; width: 100%; font-size: 12px; margin-bottom: 4px; }
+.position-btns { display: flex; gap: 6px; width: 100%; margin-top: 4px; }
+.btn-long { flex: 1; padding: 4px 6px; border-radius: 6px; border: 1px solid #00e5a044; background: #00e5a010; color: #00e5a0; font-size: 12px; cursor: pointer; white-space: nowrap; line-height: 1.4; }
+.btn-short { flex: 1; padding: 4px 6px; border-radius: 6px; border: 1px solid #ff4d6d44; background: #ff4d6d10; color: #ff4d6d; font-size: 12px; cursor: pointer; white-space: nowrap; line-height: 1.4; }
+.btn-close { width: 100%; padding: 6px; border-radius: 6px; border: 1px solid #ff8c0044; background: #ff8c0010; color: #ff8c00; font-size: 12px; cursor: pointer; margin-top: 4px; }
+</style>
+</head>
+<body>
+<div class="toast-wrap" id="toastWrap"></div>
+<div class="header">
+  <div>
+    <div class="title">⚡ CryptoSignal</div>
+    <div class="subtitle">RSI × BB × MACD × 資金調達率 × 出来高 × OI</div>
+  </div>
+  <div class="controls">
+    <select id="intervalSelect">
+      <option value="1m">1m</option>
+      <option value="5m">5m</option>
+      <option value="15m">15m</option>
+      <option value="1h" selected>1h</option>
+      <option value="4h">4h</option>
+      <option value="1d">1d</option>
+    </select>
+    <button class="btn-notif" id="notifBtn" onclick="toggleNotif()">🔔 通知 OFF</button>
+    <button class="btn" onclick="toggleLog()">📋 履歴</button>
+    <button class="btn" onclick="toggleAdd()">＋ 追加</button>
+    <button class="btn" id="scanBtn" onclick="startScan()">🔍 ｽｷｬﾝ</button>
+    <button class="btn" onclick="refreshAll()">🔄 更新</button>
+    <a href="settings.html" class="btn" style="text-decoration:none;display:inline-block">⚙️ 設定</a>
+    <button class="btn" onclick="clearCacheOnly()">🧹 ﾘﾛｰﾄﾞ</button>
+  </div>
+</div>
+<div class="add-bar hidden" id="addBar">
+  <input id="pairInput" placeholder="例: DOGE または DOGE-USDT" />
+  <button class="btn" onclick="addPairFromInput()">追加</button>
+</div>
+<div class="popular" id="popularBtns"></div>
+<div class="legend">
+  <span style="color:#00e5a0">● BUY</span>
+  <span style="color:#ff4d6d">● SELL</span>
+  <span style="color:#8888bb">● HOLD</span>
+  <span style="color:#333;font-size:10px">6指標の総合判定</span>
+</div>
+<div id="logPanel" class="hidden log-panel">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+    <span style="font-weight:700;color:#fff;font-size:15px">📋 シグナル履歴</span>
+    <button class="btn" onclick="clearLog()" style="font-size:11px;padding:4px 10px;">クリア</button>
+  </div>
+  <div id="logList"></div>
+</div>
+<div class="grid" id="grid"></div>
+<div class="footer">BingX API | 投資判断は自己責任でお願いします</div>
+<script>
+var PROXY = "https://bingx-proxy-v83p.onrender.com";
+var POPULAR_DEFAULT = ["BTC-USDT"];
+var POPULAR = POPULAR_DEFAULT.slice();
+try {
+  var savedPop = localStorage.getItem("popular2");
+  if (savedPop) {
+    var extraPop = JSON.parse(savedPop);
+    for (var ei=0; ei<extraPop.length; ei++) {
+      if (POPULAR.indexOf(extraPop[ei]) < 0) POPULAR.push(extraPop[ei]);
+    }
+  }
+} catch(e) {}
+
+var pairs = ["BTC-USDT"];
+var timers = {};
+var histories = {};
+var prevOiMap = {};
+var prevPriceMap = {};
+var notifEnabled = false;
+var notifPermission = false;
+var signalLog = [];
+
+try {
+  var saved = localStorage.getItem("pairs3");
+  if (saved) {
+    var parsedPairs = JSON.parse(saved);
+    if (Array.isArray(parsedPairs) && parsedPairs.length > 0) pairs = parsedPairs;
+  }
+} catch(e) {}
+try { signalLog = JSON.parse(localStorage.getItem("signalLog") || "[]"); } catch(e) {}
+try {
+  var savedHistories = localStorage.getItem("histories");
+  if (savedHistories) histories = JSON.parse(savedHistories);
+} catch(e) {}
+
+var positions = {};
+try {
+  var savedPositions = localStorage.getItem("positions");
+  if (savedPositions) positions = JSON.parse(savedPositions);
+} catch(e) {}
+function savePositions() { try { localStorage.setItem("positions", JSON.stringify(positions)); } catch(e) {} }
+
+function openPosition(sym, dir, currentPrice) {
+  var priceInput = prompt(dir + "エントリー価格（現在:" + fmtPrice(currentPrice) + "）", currentPrice);
+  if (priceInput === null) return;
+  var price = parseFloat(priceInput);
+  if (isNaN(price) || price <= 0) { alert("正しい価格を入力してください"); return; }
+  var qtyInput = prompt("数量を入力");
+  if (qtyInput === null) return;
+  var qty = parseFloat(qtyInput);
+  if (isNaN(qty) || qty <= 0) { alert("正しい数量を入力してください"); return; }
+  positions[sym] = { dir: dir, entryPrice: price, qty: qty, time: new Date().toLocaleString("ja-JP") };
+  savePositions();
+  fetchAndUpdate(sym);
+}
+
+function closePosition(sym) {
+  if (!confirm("ポジションをクローズしますか？")) return;
+  delete positions[sym];
+  savePositions();
+  fetchAndUpdate(sym);
+}
+
+var SETTINGS_DEFAULT = {
+  rsiHigh1:85, rsiHigh1Score:-2,
+  rsiHigh2:70, rsiHigh2Score:-1,
+  rsiLow1:15, rsiLow1Score:2,
+  rsiLow2:30, rsiLow2Score:1,
+  rsiTrendScore:2,
+  bbLowerScore:2, bbUpperScore:-2, bbMidUpScore:0.5, bbMidDownScore:-0.5,
+  bbCrossUpperScore:-2, bbCrossLowerScore:2, bbCrossMidUpScore:1, bbCrossMidDownScore:-1,
+  macd1:3, macd2:2, macd3:1, macd4:-1, macd5:-2, macd6:-3,
+  frHigh1:0.01, frHigh1Score:-2,
+  frHigh2:0.0001, frHigh2Score:-1,
+  frLow1:-0.01, frLow1Score:2,
+  frLow2:-0.0001, frLow2Score:1.5,
+  frLow3:-0.00005, frLow3Score:1,
+  thWeak:3.5, thMid:5.5, thStrong:7.5
+};
+var SETTINGS = JSON.parse(JSON.stringify(SETTINGS_DEFAULT));
+try {
+  var savedSettings = localStorage.getItem("appSettings");
+  if (savedSettings) {
+    var parsed = JSON.parse(savedSettings);
+    for (var k in parsed) SETTINGS[k] = parsed[k];
+  }
+} catch(e) {}
+
+function savePairs() { try { localStorage.setItem("pairs3", JSON.stringify(pairs)); } catch(e) {} }
+function savePopular() {
+  var extra = [];
+  for (var si=0; si<POPULAR.length; si++) {
+    if (POPULAR_DEFAULT.indexOf(POPULAR[si]) < 0) extra.push(POPULAR[si]);
+  }
+  try { localStorage.setItem("popular2", JSON.stringify(extra)); } catch(e) {}
+}
+function saveSignalLog() { try { localStorage.setItem("signalLog", JSON.stringify(signalLog.slice(0,200))); } catch(e) {} }
+function saveHistories() { try { localStorage.setItem("histories", JSON.stringify(histories)); } catch(e) {} }
+
+function addSignalLog(sym, signal, price) {
+  signalLog.unshift({ time: new Date().toLocaleString("ja-JP"), sym: sym.replace("-","/"), type: signal.type, strength: signal.strength, score: signal.score, reason: signal.reason, price: price });
+  if (signalLog.length > 200) signalLog.pop();
+  saveSignalLog();
+}
+
+function toggleLog() {
+  var panel = document.getElementById("logPanel");
+  if (panel.classList.contains("hidden")) { panel.classList.remove("hidden"); renderLog(); }
+  else { panel.classList.add("hidden"); }
+}
+
+function renderLog() {
+  var list = document.getElementById("logList");
+  if (signalLog.length === 0) { list.innerHTML = "<div style='color:#444;text-align:center;padding:24px'>まだシグナルがありません</div>"; return; }
+  var html = "";
+  for (var i=0; i<signalLog.length; i++) {
+    var s=signalLog[i], c=s.type==="BUY"?"#00e5a0":"#ff4d6d";
+    html += "<div class='log-row'><span style='color:#444;font-size:11px;min-width:110px'>"+s.time+"</span><span style='color:#fff;font-weight:700;font-size:13px'>"+s.sym+"</span><span style='color:"+c+";font-weight:800;font-size:13px'>"+s.type+"</span>"+(s.strength!=="-"?"<span style='background:"+c+"30;color:"+c+";border-radius:4px;padding:1px 5px;font-size:10px'>"+s.strength+"</span>":"")+"<span style='color:#888;font-size:12px'>"+s.price+"</span><span style='color:#555;font-size:11px'>スコア:"+s.score+"</span></div>";
+  }
+  list.innerHTML = html;
+}
+
+function clearLog() { signalLog = []; saveSignalLog(); renderLog(); }
+
+function toggleNotif() {
+  if (!notifEnabled) {
+    notifEnabled = true;
+    document.getElementById("notifBtn").textContent = "🔔 通知 ON";
+    document.getElementById("notifBtn").classList.add("on");
+    showToast("通知ON", "BUY/SELLシグナルをお知らせします", "buy", 2000);
+    if ("Notification" in window) Notification.requestPermission().then(function(p){ notifPermission = p==="granted"; });
+  } else {
+    notifEnabled = false;
+    document.getElementById("notifBtn").textContent = "🔔 通知 OFF";
+    document.getElementById("notifBtn").classList.remove("on");
+  }
+}
+
+function showToast(pair, message, type, duration) {
+  duration = duration || 4000;
+  var wrap = document.getElementById("toastWrap");
+  var toast = document.createElement("div");
+  toast.className = "toast " + type;
+  toast.innerHTML = "<div class='toast-pair'>⚡ " + pair + "</div><div class='toast-detail'>" + message + "</div>";
+  wrap.appendChild(toast);
+  setTimeout(function(){ toast.style.animation="slideOut 0.3s ease forwards"; setTimeout(function(){ if(toast.parentNode) toast.parentNode.removeChild(toast); },300); }, duration);
+}
+
+function fireSignalNotif(sym, signal, price) {
+  if (!notifEnabled) return;
+  var msg = signal.type + " " + signal.reason + " @ " + fmtPrice(price);
+  showToast(sym.replace("-","/"), msg, signal.type==="BUY"?"buy":"sell");
+  if (notifPermission) { try { new Notification("⚡ "+sym.replace("-","/")+signal.type,{body:msg}); } catch(e){} }
+  try {
+    var ctx = new (window.AudioContext||window.webkitAudioContext)();
+    var osc = ctx.createOscillator(); var gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.frequency.value = signal.type==="BUY"?880:440;
+    gain.gain.setValueAtTime(0.3,ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.5);
+    osc.start(); osc.stop(ctx.currentTime+0.5);
+  } catch(e){}
+}
+
+function renderPopular() {
+  var wrap = document.getElementById("popularBtns");
+  var html = "";
+  for (var i=0;i<POPULAR.length;i++) {
+    var p=POPULAR[i], active=pairs.indexOf(p)>=0?"active":"";
+    html += "<button class='popular-btn "+active+"' onclick='togglePair(\""+p+"\")' ontouchstart='startLongPress(\""+p+"\")' ontouchend='cancelLongPress()'>" + p.replace("-USDT","") + "</button>";
+  }
+  wrap.innerHTML = html;
+}
+
+var longPressTimer = null;
+function startLongPress(sym) { longPressTimer = setTimeout(function() { removePopularBtn(sym); }, 700); }
+function cancelLongPress() { if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; } }
+function removePopularBtn(sym) {
+  if (confirm(sym.replace("-USDT","") + " のボタンを削除しますか？")) {
+    var idx = POPULAR.indexOf(sym);
+    if (idx >= 0) { POPULAR.splice(idx, 1); savePopular(); }
+    removePair(sym);
+    renderPopular();
+  }
+}
+
+function togglePair(sym) {
+  if (pairs.indexOf(sym)>=0) { removePair(sym); }
+  else {
+    pairs.unshift(sym); savePairs(); savePopular();
+    renderCard(sym);
+    var grid=document.getElementById("grid");
+    var card=document.getElementById("card-"+sym);
+    grid.insertBefore(card,grid.firstChild);
+    loadCard(sym); renderPopular();
+  }
+}
+
+function toggleAdd() {
+  var bar = document.getElementById("addBar");
+  if (bar.classList.contains("hidden")) bar.classList.remove("hidden"); else bar.classList.add("hidden");
+}
+
+function addPairFromInput() {
+  var input = document.getElementById("pairInput");
+  var sym = input.value.toUpperCase().replace("/","-").trim();
+  if (!sym) return;
+  if (sym.indexOf("-") < 0) sym = sym + "-USDT";
+  if (pairs.indexOf(sym)<0) {
+    pairs.unshift(sym); savePairs();
+    if (POPULAR.indexOf(sym)<0) { POPULAR.push(sym); savePopular(); }
+    renderCard(sym);
+    var grid=document.getElementById("grid");
+    var card=document.getElementById("card-"+sym);
+    grid.insertBefore(card,grid.firstChild);
+    loadCard(sym); renderPopular();
+  }
+  input.value = ""; document.getElementById("addBar").classList.add("hidden");
+}
+
+function refreshAll() { for(var i=0;i<pairs.length;i++) fetchAndUpdate(pairs[i]); }
+
+function clearCacheOnly() {
+  if (!confirm("キャッシュのみクリアして再読み込みします。銘柄や履歴は残ります。")) return;
+  if ('caches' in window) {
+    caches.keys().then(function(names) { names.forEach(function(name) { caches.delete(name); }); });
+  }
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(function(registrations) {
+      registrations.forEach(function(reg) { reg.unregister(); });
+    });
+  }
+  var url = window.location.href.split('?')[0] + '?t=' + Date.now();
+  window.location.href = url;
+}
+
+function fmtPrice(p) {
+  if (p==null) return "-";
+  if (p>=10000) return p.toFixed(1);
+  if (p>=10) return p.toFixed(2);
+  if (p>=1) return p.toFixed(3);
+  if (p>=0.1) return p.toFixed(4);
+  if (p>=0.01) return p.toFixed(5);
+  return p.toFixed(6);
+}
+
+function calcRSIAt(closes, idx) {
+  var period=14;
+  if (idx<period) return null;
+  var gains=0,losses=0;
+  for (var i=idx-period+1;i<=idx;i++) {
+    var diff=closes[i]-closes[i-1];
+    if (diff>0) gains+=diff; else losses-=diff;
+  }
+  var ag=gains/period,al=losses/period;
+  if (al===0) return 100;
+  return parseFloat((100-100/(1+ag/al)).toFixed(1));
+}
+
+function calcRSI(closes) { return calcRSIAt(closes, closes.length-1); }
+function calcRSIPrev(closes) { return calcRSIAt(closes, closes.length-2); }
+
+function calcRSIAvg14(closes) {
+  var period=14;
+  if (closes.length<period) return null;
+  var slice=closes.slice(-period);
+  return slice.reduce(function(a,b){return a+b;},0)/period;
+}
+
+function calcBB(closes) {
+  var period=20,mult=2;
+  if (closes.length<period) return null;
+  var slice=closes.slice(-period);
+  var mean=slice.reduce(function(a,b){return a+b;},0)/period;
+  var std=Math.sqrt(slice.reduce(function(a,b){return a+(b-mean)*(b-mean);},0)/period);
+  return {upper:parseFloat((mean+mult*std).toFixed(6)),middle:parseFloat(mean.toFixed(6)),lower:parseFloat((mean-mult*std).toFixed(6))};
+}
+
+function calcBBAt(closes, endIdx) {
+  var period=20,mult=2;
+  if (endIdx<period-1) return null;
+  var slice=closes.slice(endIdx-period+1,endIdx+1);
+  var mean=slice.reduce(function(a,b){return a+b;},0)/period;
+  var std=Math.sqrt(slice.reduce(function(a,b){return a+(b-mean)*(b-mean);},0)/period);
+  return {upper:mean+mult*std,middle:mean,lower:mean-mult*std};
+}
+
+function calcEMA(closes, period) {
+  if (closes.length<period) return null;
+  var k=2/(period+1);
+  var ema=closes.slice(0,period).reduce(function(a,b){return a+b;},0)/period;
+  for (var i=period;i<closes.length;i++) ema=closes[i]*k+ema*(1-k);
+  return ema;
+}
+
+function calcMACDAt(closes, endIdx) {
+  var sub = closes.slice(0, endIdx+1);
+  if (sub.length<27) return null;
+  var ema12=calcEMA(sub,12),ema26=calcEMA(sub,26);
+  if (!ema12||!ema26) return null;
+  var macdLine=ema12-ema26;
+  var macdVals=[];
+  for (var i=sub.length-9;i<sub.length;i++) {
+    var e12=calcEMA(sub.slice(0,i+1),12),e26=calcEMA(sub.slice(0,i+1),26);
+    if (e12&&e26) macdVals.push(e12-e26);
+  }
+  var sig=macdVals.reduce(function(a,b){return a+b;},0)/macdVals.length;
+  return {macd:macdLine,signal:sig,hist:macdLine-sig};
+}
+
+function calcMACD(closes) { return calcMACDAt(closes, closes.length-1); }
+function calcMACDPrev(closes) { return calcMACDAt(closes, closes.length-2); }
+
+function calcADX(highs, lows, closes, period) {
+  period = period || 14;
+  if (closes.length < period*2) return null;
+  var plusDM=[], minusDM=[], tr=[];
+  for (var i=1;i<closes.length;i++) {
+    var upMove = highs[i]-highs[i-1];
+    var downMove = lows[i-1]-lows[i];
+    plusDM.push(upMove>downMove && upMove>0 ? upMove : 0);
+    minusDM.push(downMove>upMove && downMove>0 ? downMove : 0);
+    var trVal = Math.max(highs[i]-lows[i], Math.abs(highs[i]-closes[i-1]), Math.abs(lows[i]-closes[i-1]));
+    tr.push(trVal);
+  }
+  function smooth(arr, period) {
+    var result = arr.slice(0,period).reduce(function(a,b){return a+b;},0);
+    var out = [result];
+    for (var i=period;i<arr.length;i++) {
+      result = result - (result/period) + arr[i];
+      out.push(result);
+    }
+    return out;
+  }
+  var trSm = smooth(tr, period);
+  var plusDMSm = smooth(plusDM, period);
+  var minusDMSm = smooth(minusDM, period);
+  var plusDI=[], minusDI=[], dx=[];
+  for (var i=0;i<trSm.length;i++) {
+    var pdi = trSm[i]>0 ? (plusDMSm[i]/trSm[i])*100 : 0;
+    var mdi = trSm[i]>0 ? (minusDMSm[i]/trSm[i])*100 : 0;
+    plusDI.push(pdi);
+    minusDI.push(mdi);
+    var sum = pdi+mdi;
+    dx.push(sum>0 ? (Math.abs(pdi-mdi)/sum)*100 : 0);
+  }
+  if (dx.length < period) return null;
+  var adxArr = smooth(dx, period).map(function(v){return v/period;});
+  var lastIdx = adxArr.length-1;
+  return { adx: adxArr[lastIdx], plusDI: plusDI[plusDI.length-1], minusDI: minusDI[minusDI.length-1] };
+}
+
+function calcATR(highs, lows, closes, period) {
+  period = period || 14;
+  if (closes.length < period+1) return null;
+  var trs = [];
+  for (var i=1; i<closes.length; i++) {
+    var tr = Math.max(highs[i]-lows[i], Math.abs(highs[i]-closes[i-1]), Math.abs(lows[i]-closes[i-1]));
+    trs.push(tr);
+  }
+  var recentTrs = trs.slice(-period);
+  return recentTrs.reduce(function(a,b){return a+b;},0)/period;
+}
+
+function calcTrendIndexRaw(closes, highs, lows) {
+  var trendScore = 0;
+  var details = [];
+  var ema12 = calcEMA(closes, 12);
+  var ema26 = calcEMA(closes, 26);
+  var atr = calcATR(highs, lows, closes, 14);
+  if (ema12 && ema26 && ema12!==0 && atr) {
+    var dif = ema12 - ema26;
+    var deviation = (dif/ema12)*100;
+    var atrPct = (atr/closes[closes.length-1])*100;
+    var normDeviation = atrPct>0 ? deviation/atrPct : 0;
+    var emaScore = 0;
+    if (normDeviation>=1.5) emaScore=3;
+    else if (normDeviation>=1.0) emaScore=2;
+    else if (normDeviation>=0.5) emaScore=1;
+    else if (normDeviation<=-1.5) emaScore=-3;
+    else if (normDeviation<=-1.0) emaScore=-2;
+    else if (normDeviation<=-0.5) emaScore=-1;
+    trendScore += emaScore;
+    details.push("EMA乖離:"+emaScore);
+  }
+  var adxData = calcADX(highs, lows, closes, 14);
+  if (adxData) {
+    var adxScore = 0;
+    if (adxData.plusDI > adxData.minusDI) {
+      adxScore = adxData.adx >= 40 ? 3 : adxData.adx >= 25 ? 2 : 1;
+    } else {
+      adxScore = adxData.adx >= 40 ? -3 : adxData.adx >= 25 ? -2 : -1;
+    }
+    trendScore += adxScore;
+    details.push("ADX:"+adxScore);
+  }
+  return { score: parseFloat(trendScore.toFixed(1)), reason: details.join(" ") };
+}
+
+var trendHistoryMap = {};
+
+function calcTrendIndex(closes, highs, lows, sym, interval) {
+  var raw = calcTrendIndexRaw(closes, highs, lows);
+  if (!sym) return raw;
+  var ms={"1m":60000,"5m":300000,"15m":900000,"1h":3600000,"4h":14400000,"1d":86400000};
+  var barMs = ms[interval] || 3600000;
+  if (!trendHistoryMap[sym]) trendHistoryMap[sym] = [];
+  var arr = trendHistoryMap[sym];
+  var last = arr[arr.length-1];
+  var nowBarId = Math.floor(Date.now()/barMs);
+  if (!last || last.barId !== nowBarId) {
+    arr.push({barId: nowBarId, score: raw.score});
+    if (arr.length > 3) arr.shift();
+  } else {
+    arr[arr.length-1].score = raw.score;
+  }
+  var avgScore = arr.reduce(function(a,b){return a+b.score;},0)/arr.length;
+  return { score: parseFloat(avgScore.toFixed(1)), reason: raw.reason };
+}
+
+function calcScore(closes, volumes, price, fundingRate, oi, prevOi) {
+  var score=0,reasons=[],details={rsi:0,bb:0,macd:0,fr:0,vol:0,oi:0};
+
+  var rsi = calcRSI(closes);
+  var rsiPrev = calcRSIPrev(closes);
+  var rsiAvg14 = calcRSIAvg14(closes);
+  var bb = calcBB(closes);
+  var bbPrev = calcBBAt(closes, closes.length-2);
+  var macd = calcMACD(closes);
+  var macdPrev = calcMACDPrev(closes);
+
+  if (macd!==null) {
+    var macdScore=0;
+    var histExpanding = macdPrev!==null ? Math.abs(macd.hist)>Math.abs(macdPrev.hist) : true;
+    if (macd.macd>0 && macd.macd>macd.signal) {
+      macdScore = histExpanding ? SETTINGS.macd1 : SETTINGS.macd2;
+    } else if (macd.macd>0 && macd.macd<=macd.signal) {
+      macdScore = SETTINGS.macd3;
+    } else if (macd.macd<=0 && macd.macd>macd.signal) {
+      macdScore = SETTINGS.macd4;
+    } else {
+      macdScore = histExpanding ? SETTINGS.macd6 : SETTINGS.macd5;
+    }
+    details.macd=macdScore;
+    score+=macdScore;
+    reasons.push("MACD:"+macdScore);
+  }
+
+  if (rsi!==null) {
+    var rsiScore=0;
+    if (rsiAvg14!==null && rsiPrev!==null) {
+      if (rsi>rsiAvg14 && rsi>rsiPrev) { rsiScore+=SETTINGS.rsiTrendScore; }
+      else if (rsi<rsiAvg14 && rsi<rsiPrev) { rsiScore-=SETTINGS.rsiTrendScore; }
+    }
+    if (rsi>=SETTINGS.rsiHigh1) rsiScore+=SETTINGS.rsiHigh1Score;
+    else if (rsi>=SETTINGS.rsiHigh2) rsiScore+=SETTINGS.rsiHigh2Score;
+    if (rsi<=SETTINGS.rsiLow1) rsiScore+=SETTINGS.rsiLow1Score;
+    else if (rsi<=SETTINGS.rsiLow2) rsiScore+=SETTINGS.rsiLow2Score;
+    details.rsi=rsiScore;
+    score+=rsiScore;
+    if (rsiScore!==0) reasons.push("RSI:"+rsiScore);
+  }
+
+  if (bb!==null&&price!==null) {
+    var bbScore=0;
+    if (price<=bb.lower){bbScore+=SETTINGS.bbLowerScore;reasons.push("BB下限");}
+    else if (price>=bb.upper){bbScore+=SETTINGS.bbUpperScore;reasons.push("BB上限");}
+    else if (price<bb.middle){bbScore+=SETTINGS.bbMidUpScore;}
+    else{bbScore+=SETTINGS.bbMidDownScore;}
+
+    if (bbPrev!==null) {
+      var prevClose = closes[closes.length-2];
+      if (prevClose >= bbPrev.upper && price < bb.upper) { bbScore+=SETTINGS.bbCrossUpperScore; reasons.push("BB上限下抜"); }
+      if (prevClose <= bbPrev.lower && price > bb.lower) { bbScore+=SETTINGS.bbCrossLowerScore; reasons.push("BB下限上抜"); }
+      if (prevClose >= bbPrev.middle && price < bb.middle) { bbScore+=SETTINGS.bbCrossMidDownScore; reasons.push("BB中央下抜"); }
+      if (prevClose <= bbPrev.middle && price > bb.middle) { bbScore+=SETTINGS.bbCrossMidUpScore; reasons.push("BB中央上抜"); }
+    }
+    details.bb=parseFloat(bbScore.toFixed(1));
+    score+=bbScore;
+  }
+
+  var volScore=0;
+  if (volumes && volumes.length>=21) {
+    var completedVolumes = volumes.slice(0,-1);
+    var recentVol = completedVolumes[completedVolumes.length-1];
+    var avgVol = completedVolumes.slice(-21,-1).reduce(function(a,b){return a+b;},0)/20;
+    var priceUpNow = closes.length>=2 && closes[closes.length-1]>closes[closes.length-2];
+    var priceDownNow = closes.length>=2 && closes[closes.length-1]<closes[closes.length-2];
+    if (avgVol>0) {
+      var volRatio = recentVol/avgVol;
+      if (volRatio>=1.5 && priceUpNow) { volScore=1; reasons.push("出来高急増↑"); }
+      else if (volRatio>=1.5 && priceDownNow) { volScore=-1; reasons.push("出来高急増↓"); }
+    }
+  }
+  details.vol=volScore;
+  score+=volScore;
+
+  if (fundingRate!==null) {
+    var frScore=0;
+    if (fundingRate>=SETTINGS.frHigh1){frScore=SETTINGS.frHigh1Score;reasons.push("FR高+");}
+    else if (fundingRate>=SETTINGS.frHigh2){frScore=SETTINGS.frHigh2Score;reasons.push("FR中+");}
+    else if (fundingRate<=SETTINGS.frLow1){frScore=SETTINGS.frLow1Score;reasons.push("FR高-");}
+    else if (fundingRate<=SETTINGS.frLow2){frScore=SETTINGS.frLow2Score;reasons.push("FR中-");}
+    else if (fundingRate<=SETTINGS.frLow3){frScore=SETTINGS.frLow3Score;reasons.push("FR低-");}
+    else if (fundingRate<0){frScore=0.5;}
+    details.fr=frScore;
+    score+=frScore;
+  }
+
+  if (oi!==null&&prevOi!==null&&prevOi>0) {
+    var oiChange=(oi-prevOi)/prevOi;
+    var priceUpOi = closes.length>=2 && closes[closes.length-1]>closes[closes.length-2];
+    var priceDownOi = closes.length>=2 && closes[closes.length-1]<closes[closes.length-2];
+    var oiScore=0;
+    if (oiChange>=0.05 && priceUpOi) oiScore=2;
+    else if (oiChange>=0.05 && priceDownOi) oiScore=-2;
+    else if (oiChange>=0.02 && priceUpOi) oiScore=1;
+    else if (oiChange>=0.02 && priceDownOi) oiScore=-1;
+    else if (oiChange<=-0.02) oiScore=0.5;
+    details.oi=oiScore;
+    score+=oiScore;
+    if (oiScore!==0) reasons.push("OI:"+oiScore);
+  }
+
+  var type="HOLD",strength="-";
+  if (score>=SETTINGS.thStrong){type="BUY";strength="強";}
+  else if (score>=SETTINGS.thMid){type="BUY";strength="中";}
+  else if (score>=SETTINGS.thWeak){type="BUY";strength="弱";}
+  else if (score<=-SETTINGS.thStrong){type="SELL";strength="強";}
+  else if (score<=-SETTINGS.thMid){type="SELL";strength="中";}
+  else if (score<=-SETTINGS.thWeak){type="SELL";strength="弱";}
+
+  return {type:type,strength:strength,score:parseFloat(score.toFixed(1)),reason:reasons.join(" ")||"中立",details:details,rsi:rsi,bb:bb,macd:macd};
+}
+
+function renderCard(sym) {
+  if (document.getElementById("card-"+sym)) return;
+  var div=document.createElement("div");
+  div.className="card"; div.id="card-"+sym;
+  div.innerHTML="<div class='loading'>⏳ データ取得中...</div>";
+  document.getElementById("grid").appendChild(div);
+}
+
+function getJSON(url) {
+  return new Promise(function(resolve,reject) {
+    var xhr=new XMLHttpRequest();
+    xhr.open("GET",url);
+    xhr.onload=function(){ if(xhr.status===200){ try{resolve(JSON.parse(xhr.responseText));}catch(e){reject(e);} }else{reject(new Error("HTTP "+xhr.status));} };
+    xhr.onerror=function(){ reject(new Error("Network error")); };
+    xhr.timeout=30000;
+    xhr.ontimeout=function(){ reject(new Error("Timeout")); };
+    xhr.send();
+  });
+}
+
+function recordSignal(sym) {
+  var cur = window["_current_"+sym];
+  if (!cur) return;
+  if (!histories[sym]) histories[sym]=[];
+  var now=new Date();
+  var timeStr=(now.getMonth()+1)+"/"+(now.getDate())+" "+(now.getHours())+":"+(("0"+now.getMinutes()).slice(-2));
+  histories[sym].unshift({
+    time:timeStr, timestamp:Date.now(), signal:cur.signal, price:cur.price,
+    bbRate:cur.bbRate, trendScore:cur.trend.score
+  });
+  if (histories[sym].length>5) histories[sym].pop();
+  saveHistories();
+  fetchAndUpdate(sym);
+}
+
+function clearHistory(sym) {
+  histories[sym] = [];
+  saveHistories();
+  fetchAndUpdate(sym);
+}
+
+var updateQueue = [];
+var updateQueueRunning = false;
+
+function processUpdateQueue() {
+  if (updateQueueRunning || updateQueue.length === 0) return;
+  updateQueueRunning = true;
+  var sym = updateQueue.shift();
+  fetchAndUpdate(sym);
+  setTimeout(function() {
+    updateQueueRunning = false;
+    processUpdateQueue();
+  }, 800);
+}
+
+function fetchAndUpdate(sym) {
+  var interval=document.getElementById("intervalSelect").value;
+  var card=document.getElementById("card-"+sym);
+  if (!card) return;
+  Promise.all([
+    getJSON(PROXY+"/kline?symbol="+sym+"&interval="+interval+"&limit=100"),
+    getJSON(PROXY+"/ticker?symbol="+sym),
+    getJSON(PROXY+"/funding?symbol="+sym).catch(function(){return null;}),
+    getJSON(PROXY+"/oi?symbol="+sym).catch(function(){return null;})
+  ]).then(function(data) {
+    var kJson=data[0],tJson=data[1],fJson=data[2],oiJson=data[3];
+    var closes=kJson.data.map(function(d){return parseFloat(Array.isArray(d)?d[4]:d.close);});
+    var highs=kJson.data.map(function(d){return parseFloat(Array.isArray(d)?d[2]:d.high);});
+    var lows=kJson.data.map(function(d){return parseFloat(Array.isArray(d)?d[3]:d.low);});
+    var volumes=kJson.data.map(function(d){return parseFloat(Array.isArray(d)?d[5]:(d.volume||0));});
+    var td=Array.isArray(tJson.data)?tJson.data[0]:tJson.data;
+    var price=parseFloat(td.lastPrice);
+    var change=parseFloat(String(td.priceChangePercent||td.priceChange||"0").replace("%",""));
+    var fundingRate=fJson&&fJson.data?parseFloat(fJson.data.lastFundingRate||0):null;
+    var oi=oiJson&&oiJson.data?parseFloat(oiJson.data.openInterest||0):null;
+    var prevOi=prevOiMap[sym]||null;
+    if (oi) prevOiMap[sym]=oi;
+
+    var signal=calcScore(closes, volumes, price, fundingRate, oi, prevOi);
+    var rsi=signal.rsi, bb=signal.bb, macd=signal.macd;
+    var trend=calcTrendIndex(closes, highs, lows, sym, interval);
+
+    if (!histories[sym]) histories[sym]=[];
+    var lastSig=histories[sym][0]?histories[sym][0].signal.type:null;
+    if (signal.type!=="HOLD"&&signal.type!==lastSig) {
+      fireSignalNotif(sym,signal,price);
+      addSignalLog(sym,signal,price);
+    }
+    window["_current_"+sym] = {signal:signal, price:price, bbRate: bb?parseFloat(((bb.upper-bb.lower)/bb.upper*100).toFixed(1)):0, trend:trend};
+
+    var sigColor=signal.type==="BUY"?"#00e5a0":signal.type==="SELL"?"#ff4d6d":"#8888bb";
+    var chgColor=change>=0?"#00e5a0":"#ff4d6d";
+    var rsiColor=rsi<30?"#00e5a0":rsi>70?"#ff4d6d":"#5577ff";
+    var frPct=fundingRate!==null?(fundingRate*100).toFixed(4)+"%":"--";
+    var oiStr=oi!==null?(oi/1000000).toFixed(1)+"M":"--";
+    var macdStr=macd?parseFloat(macd.macd.toFixed(4))+"/"+parseFloat(macd.signal.toFixed(4)):"--";
+    var bbRate=bb?parseFloat(((bb.upper-bb.lower)/bb.upper*100).toFixed(1)):0;
+    var bbRateColor=bbRate>=30?"#ff4d6d":bbRate>=20?"#00e5a0":"#888";
+    var d=signal.details;
+    var detailStr="RSI:"+d.rsi+" BB:"+d.bb+" MACD:"+d.macd+" FR:"+d.fr+" 出来高:"+d.vol+" OI:"+d.oi;
+
+    var tpPct = bbRate >= 50 ? 0.10 : bbRate >= 30 ? 0.08 : bbRate >= 10 ? 0.06 : 0.04;
+    var slPct = tpPct;
+    var isSell = signal.type === "SELL";
+    var tp = isSell ? fmtPrice(price*(1-tpPct)) : fmtPrice(price*(1+tpPct));
+    var sl = isSell ? fmtPrice(price*(1+slPct)) : fmtPrice(price*(1-slPct));
+    var tpLabel = isSell ? "-"+Math.round(tpPct*100)+"%" : "+"+Math.round(tpPct*100)+"%";
+    var slLabel = isSell ? "+"+Math.round(slPct*100)+"%" : "-"+Math.round(slPct*100)+"%";
+
+    var histHtml="";
+    if (histories[sym].length>0) {
+      histHtml="<div class='hist'>"+
+        "<div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:5px'>"+
+          "<span class='hist-label' style='margin-bottom:0'>シグナル履歴</span>"+
+          "<button onclick='clearHistory(\""+sym+"\")' style='background:none;border:none;color:#444;cursor:pointer;font-size:11px'>クリア</button>"+
+        "</div>";
+      for (var i=0;i<histories[sym].length;i++) {
+        var h=histories[sym][i];
+        var hSym=h.signal.type==="BUY"?"▲":h.signal.type==="SELL"?"▼":"●";
+        var hc=h.signal.type==="BUY"?"#00e5a0":h.signal.type==="SELL"?"#ff4d6d":"#8888bb";
+        var hTrend=h.trendScore!==undefined?h.trendScore:0;
+        var htColor=hTrend>2?"#ff69b4":hTrend<-2?"#00bcd4":"#8888bb";
+        var hbbRate=h.bbRate||0;
+        var htpPct=hbbRate>=50?0.10:hbbRate>=30?0.08:hbbRate>=10?0.06:0.04;
+        var hIsSell=h.signal.type==="SELL";
+        var htp=hIsSell?fmtPrice(h.price*(1-htpPct)):fmtPrice(h.price*(1+htpPct));
+        var hsl=hIsSell?fmtPrice(h.price*(1+htpPct)):fmtPrice(h.price*(1-htpPct));
+        histHtml+="<div class='hist-row' style='flex-wrap:nowrap;overflow-x:auto;white-space:nowrap'>"+
+          "<span style='color:#444;min-width:56px;font-size:10px'>"+h.time+"</span>"+
+          "<span style='color:"+hc+";font-weight:800;font-size:13px'>"+hSym+" "+h.signal.strength+"</span>"+
+          "<span style='color:"+hc+";font-size:11px;font-weight:700'>"+h.signal.score+"/</span>"+
+          "<span style='color:"+htColor+";font-size:11px;font-weight:700'>"+hTrend+"</span>"+
+          "<span style='color:#ff4d6d;font-weight:700'>"+fmtPrice(h.price)+"</span>"+
+          "<span style='color:#ff69b4;font-size:10px'>TP:"+htp+"</span>"+
+          "<span style='color:#00bcd4;font-size:10px'>SL:"+hsl+"</span>"+
+        "</div>";
+      }
+      histHtml+="</div>";
+    }
+
+    var pos = positions[sym];
+    var positionBtnsHtml = pos ? (
+      "<button class='btn-close' onclick='closePosition(\""+sym+"\")'>クローズ</button>"
+    ) : (
+      "<div class='position-btns'>"+
+        "<button class='btn-long' onclick='openPosition(\""+sym+"\",\"ロング\","+price+")'>ロング</button>"+
+        "<button class='btn-short' onclick='openPosition(\""+sym+"\",\"ショート\","+price+")'>ショート</button>"+
+      "</div>"
+    );
+
+    var positionInfoHtml = "";
+    if (pos) {
+      var pnl = pos.dir==="ロング" ? (price-pos.entryPrice)*pos.qty : (pos.entryPrice-price)*pos.qty;
+      var pnlColor = pnl>=0 ? "#00e5a0" : "#ff4d6d";
+      positionInfoHtml =
+        "<div class='position-divider'></div>"+
+        "<div class='position-row'><span style='color:"+(pos.dir==="ロング"?"#00e5a0":"#ff4d6d")+";font-weight:700'>"+pos.dir+"</span><span style='color:#888'>"+pos.time+"</span></div>"+
+        "<div class='position-row'><span style='color:#888'>エントリー</span><span>"+fmtPrice(pos.entryPrice)+"</span></div>"+
+        "<div class='position-row'><span style='color:#888'>数量</span><span>"+pos.qty+"</span></div>"+
+        "<div class='position-row'><span style='color:#888'>損益</span><span style='color:"+pnlColor+";font-weight:700'>"+(pnl>=0?"+":"")+pnl.toFixed(2)+" USDT</span></div>";
+    }
+
+    card.innerHTML=
+      "<div class='card-header'>"+
+        "<div>"+
+          "<div class='pair-name'>"+sym.replace("-","/")+"</div>"+
+          "<div style='color:"+chgColor+";font-size:12px'>"+(change>=0?"▲":"▼")+" "+Math.abs(change).toFixed(2)+"% (24h)</div>"+
+          positionBtnsHtml+
+        "</div>"+
+          "<div style='text-align:right'>"+
+          "<div style='display:flex;align-items:center;gap:6px;justify-content:flex-end'>"+
+            "<div class='price'>"+fmtPrice(price)+"</div>"+
+            "<button class='x-btn' onclick='removePair(\""+sym+"\")'>✕</button>"+
+          "</div>"+
+          "<div style='height:12px'></div>"+
+          "<div style='display:flex;align-items:center;gap:6px;justify-content:flex-end'>"+
+            "<div>"+
+              "<div style='color:#ff69b4;font-size:12px'>TP: "+tp+" ("+tpLabel+")</div>"+
+              "<div style='color:#00bcd4;font-size:12px'>SL: "+sl+" ("+slLabel+")</div>"+
+            "</div>"+
+            "<button onclick='recordSignal(\""+sym+"\")' style='background:none;border:none;font-size:16px;cursor:pointer;padding:0'>✏️</button>"+
+          "</div>"+
+        "</div>"+
+      "</div>"+
+      "<div class='badge' style='background:"+sigColor+"18;border:1px solid "+sigColor+"44;color:"+sigColor+"'>"+
+        "<span class='badge-type'>"+signal.type+"</span>"+
+        (signal.strength!=="-"?"<span class='badge-strength' style='background:"+sigColor+"30'>"+signal.strength+"</span>":"")+
+        "<span style='background:"+(signal.score>=SETTINGS.thWeak?"#00e5a030":signal.score<=-SETTINGS.thWeak?"#ff4d6d30":"#5577ff30")+";color:"+(signal.score>=SETTINGS.thWeak?"#00e5a0":signal.score<=-SETTINGS.thWeak?"#ff4d6d":"#5577ff")+";border-radius:4px;padding:1px 6px;font-size:10px;font-weight:700;margin-left:4px'>スコア:"+signal.score+"</span>"+
+        "<span style='background:"+(trend.score>2?"#ff69b430":trend.score<-2?"#00bcd430":"#8888bb30")+";color:"+(trend.score>2?"#ff69b4":trend.score<-2?"#00bcd4":"#8888bb")+";border-radius:4px;padding:1px 6px;font-size:10px;font-weight:700;margin-left:4px'>トレンド:"+trend.score+"</span>"+
+        "<span class='badge-reason'>"+signal.reason+"</span>"+
+        "<span class='badge-details'>"+detailStr+" | "+trend.reason+"</span>"+
+        positionInfoHtml+
+      "</div>"+
+      "<div class='ind-grid'>"+
+        "<div class='ind-row'><span class='ind-label'>RSI</span><span style='color:"+rsiColor+";font-size:12px;font-weight:600'>"+rsi+"</span></div>"+
+        "<div class='ind-row'><span class='ind-label'>BB率</span><span style='color:"+bbRateColor+";font-size:12px;font-weight:600'>"+bbRate+"%</span></div>"+
+        "<div class='ind-row'><span class='ind-label'>BB上限</span><span class='ind-val'>"+fmtPrice(bb?bb.upper:null)+"</span></div>"+
+        "<div class='ind-row'><span class='ind-label'>BB下限</span><span class='ind-val'>"+fmtPrice(bb?bb.lower:null)+"</span></div>"+
+        "<div class='ind-row'><span class='ind-label'>MACD</span><span class='ind-val'>"+macdStr+"</span></div>"+
+        "<div class='ind-row'><span class='ind-label'>資金調達率</span><span class='ind-val' style='color:"+(fundingRate>=0.01?"#ff4d6d":fundingRate<=-0.0001?"#00e5a0":"#888")+"'>"+frPct+"</span></div>"+
+        "<div class='ind-row'><span class='ind-label'>OI</span><span class='ind-val'>"+oiStr+"</span></div>"+
+        "<div class='ind-row'><span class='ind-label'>BB中央</span><span class='ind-val'>"+fmtPrice(bb?bb.middle:null)+"</span></div>"+
+      "</div>"+histHtml;
+  }).catch(function(e){
+    card.innerHTML="<div class='card-header'><span class='pair-name'>"+sym.replace("-","/")+"</span><button class='x-btn' style='float:right' onclick='removePair(\""+sym+"\")'>✕</button></div><div class='error'>⚠ "+e.message+"</div><button class='btn' onclick='fetchAndUpdate(\""+sym+"\")'>再試行</button>";
+  });
+}
+
+function removePair(sym) {
+  var idx=pairs.indexOf(sym); if (idx>=0) pairs.splice(idx,1);
+  savePairs();
+  if (timers[sym]){clearInterval(timers[sym]);delete timers[sym];}
+  delete trendHistoryMap[sym];
+  var card=document.getElementById("card-"+sym); if(card) card.parentNode.removeChild(card);
+  renderPopular();
+}
+
+function loadCard(sym) {
+  if (timers[sym]) clearInterval(timers[sym]);
+  updateQueue.push(sym);
+  processUpdateQueue();
+  var ms={"1m":15000,"5m":20000,"15m":30000,"1h":60000,"4h":120000,"1d":300000};
+  var interval=document.getElementById("intervalSelect").value;
+  timers[sym]=setInterval(function(){
+    updateQueue.push(sym);
+    processUpdateQueue();
+  },ms[interval]||60000);
+}
+
+document.getElementById("intervalSelect").addEventListener("change",function(){
+  for(var k in timers) clearInterval(timers[k]); timers={};
+  for(var i=0;i<pairs.length;i++) loadCard(pairs[i]);
+});
+
+var scanQueue=[],scanResults=[],scanIndex=0,scanTotal=0;
+
+function startScan() {
+  var btn=document.getElementById("scanBtn");
+  btn.textContent="⏳ スキャン中..."; btn.disabled=true;
+  scanResults=[];
+  scanQueue=POPULAR.filter(function(p){ return pairs.indexOf(p)<0; });
+  scanTotal=scanQueue.length; scanIndex=0;
+  if (scanTotal===0) { btn.textContent="🔍 スキャン"; btn.disabled=false; return; }
+  scanNext();
+}
+
+function scanNext() {
+  var btn=document.getElementById("scanBtn");
+  if (scanIndex>=scanTotal) {
+    btn.textContent="🔍 スキャン"; btn.disabled=false;
+    if (scanResults.length===0) { showToast("スキャン完了","シグナルなし","buy",3000); }
+    else {
+      showToast("スキャン完了",scanResults.length+"件発見！","buy",3000);
+      scanResults.forEach(function(sym){
+        if (pairs.indexOf(sym)<0) {
+          pairs.unshift(sym); savePairs();
+          renderCard(sym);
+          var grid=document.getElementById("grid");
+          var card=document.getElementById("card-"+sym);
+          grid.insertBefore(card,grid.firstChild);
+          loadCard(sym); renderPopular();
+        }
+      });
+    }
+    return;
+  }
+  var sym=scanQueue[scanIndex];
+  btn.textContent="⏳ "+scanIndex+"/"+scanTotal;
+  scanIndex++;
+  var interval=document.getElementById("intervalSelect").value;
+  Promise.all([
+    getJSON(PROXY+"/kline?symbol="+sym+"&interval="+interval+"&limit=100"),
+    getJSON(PROXY+"/ticker?symbol="+sym),
+    getJSON(PROXY+"/funding?symbol="+sym).catch(function(){return null;}),
+    getJSON(PROXY+"/oi?symbol="+sym).catch(function(){return null;})
+  ]).then(function(data){
+    var kJson=data[0],tJson=data[1],fJson=data[2],oiJson=data[3];
+    var closes=kJson.data.map(function(d){return parseFloat(Array.isArray(d)?d[4]:d.close);});
+    var volumes=kJson.data.map(function(d){return parseFloat(Array.isArray(d)?d[5]:(d.volume||0));});
+    var td=Array.isArray(tJson.data)?tJson.data[0]:tJson.data;
+    var price=parseFloat(td.lastPrice);
+    var fundingRate=fJson&&fJson.data?parseFloat(fJson.data.lastFundingRate||0):null;
+    var oi=oiJson&&oiJson.data?parseFloat(oiJson.data.openInterest||0):null;
+    var prevOi=prevOiMap[sym]||null;
+    var signal=calcScore(closes, volumes, price, fundingRate, oi, prevOi);
+    var highs=kJson.data.map(function(d){return parseFloat(Array.isArray(d)?d[2]:d.high);});
+    var lows=kJson.data.map(function(d){return parseFloat(Array.isArray(d)?d[3]:d.low);});
+    var trend=calcTrendIndex(closes, highs, lows, sym, interval);
+    var frAbs=fundingRate!==null?Math.abs(fundingRate):0;
+    if (signal.type!=="HOLD"||frAbs>=0.005||trend.score>=3||trend.score<=-3) scanResults.push(sym);
+  }).catch(function(){}).then(function(){ setTimeout(scanNext,500); });
+}
+
+renderPopular();
+for(var i=0;i<pairs.length;i++){
+  renderCard(pairs[i]);
+  (function(sym,delay){ setTimeout(function(){ loadCard(sym); }, delay); })(pairs[i], i*3500);
+}
+</script>
+</body>
+</html>
