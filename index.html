@@ -6,8 +6,8 @@
 <title>🎮 Crypto Simulator</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: #07070f; color: #dde; font-family: -apple-system, sans-serif; min-height: 100vh; padding-bottom: 48px; }
-.header { display: flex; justify-content: space-between; align-items: flex-start; padding: 18px 16px 12px; border-bottom: 1px solid #12121f; flex-wrap: wrap; gap: 10px; position: sticky; top: 0; background: #07070f; z-index: 100; }
+body { background: #07070f; color: #dde; font-family: -apple-system, sans-serif; min-height: 100vh; padding-bottom: 48px; padding-top: 150px; }
+.header { display: flex; justify-content: space-between; align-items: flex-start; padding: 18px 16px 12px; border-bottom: 1px solid #12121f; flex-wrap: wrap; gap: 10px; position: fixed; top: 0; left: 0; right: 0; background: #07070f; z-index: 100; }
 .title { font-size: 20px; font-weight: 800; color: #fff; }
 .subtitle { font-size: 11px; color: #383848; margin-top: 3px; }
 .controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
@@ -15,7 +15,7 @@ select { background: #0d0d1a; border: 1px solid #222236; color: #aaa; border-rad
 .btn { padding: 6px 14px; border-radius: 8px; border: 1px solid #00e5a044; background: #00e5a010; color: #00e5a0; cursor: pointer; font-size: 13px; }
 .btn-notif { padding: 6px 14px; border-radius: 8px; border: 1px solid #5577ff44; background: #5577ff10; color: #5577ff; cursor: pointer; font-size: 13px; }
 .btn-notif.on { background: #5577ff30; border-color: #5577ff; }
-.funds-bar { display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: #0d0d1a; border-bottom: 1px solid #12121f; position: sticky; top: 76px; z-index: 99; }
+.funds-bar { display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: #0d0d1a; border-bottom: 1px solid #12121f; position: fixed; top: 100px; left: 0; right: 0; z-index: 99; }
 .add-bar { display: flex; gap: 8px; padding: 10px 16px; background: #0d0d1a; border-bottom: 1px solid #12121f; align-items: center; flex-wrap: wrap; }
 .add-bar input { flex: 1; min-width: 120px; background: #07070f; border: 1px solid #222236; color: #ccc; border-radius: 7px; padding: 6px 12px; font-size: 13px; }
 .popular { display: flex; gap: 6px; flex-wrap: wrap; padding: 8px 16px; border-bottom: 1px solid #0f0f1c; }
