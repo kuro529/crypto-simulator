@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>⚡ CryptoSignal</title>
+<title>🎮 Crypto Simulator</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { background: #07070f; color: #dde; font-family: -apple-system, sans-serif; min-height: 100vh; padding-bottom: 48px; }
@@ -15,6 +15,7 @@ select { background: #0d0d1a; border: 1px solid #222236; color: #aaa; border-rad
 .btn { padding: 6px 14px; border-radius: 8px; border: 1px solid #00e5a044; background: #00e5a010; color: #00e5a0; cursor: pointer; font-size: 13px; }
 .btn-notif { padding: 6px 14px; border-radius: 8px; border: 1px solid #5577ff44; background: #5577ff10; color: #5577ff; cursor: pointer; font-size: 13px; }
 .btn-notif.on { background: #5577ff30; border-color: #5577ff; }
+.funds-bar { display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: #0d0d1a; border-bottom: 1px solid #12121f; position: sticky; top: 0; z-index: 99; }
 .add-bar { display: flex; gap: 8px; padding: 10px 16px; background: #0d0d1a; border-bottom: 1px solid #12121f; align-items: center; flex-wrap: wrap; }
 .add-bar input { flex: 1; min-width: 120px; background: #07070f; border: 1px solid #222236; color: #ccc; border-radius: 7px; padding: 6px 12px; font-size: 13px; }
 .popular { display: flex; gap: 6px; flex-wrap: wrap; padding: 8px 16px; border-bottom: 1px solid #0f0f1c; }
@@ -67,7 +68,7 @@ select { background: #0d0d1a; border: 1px solid #222236; color: #aaa; border-rad
 <div class="toast-wrap" id="toastWrap"></div>
 <div class="header">
   <div>
-    <div class="title">⚡ CryptoSignal</div>
+    <div class="title">🎮 Crypto Simulator</div>
     <div class="subtitle">RSI × BB × MACD × 資金調達率 × 出来高 × OI</div>
   </div>
   <div class="controls">
@@ -82,11 +83,15 @@ select { background: #0d0d1a; border: 1px solid #222236; color: #aaa; border-rad
     <button class="btn-notif" id="notifBtn" onclick="toggleNotif()">🔔 通知 OFF</button>
     <button class="btn" onclick="toggleLog()">📋 履歴</button>
     <button class="btn" onclick="toggleAdd()">＋ 追加</button>
-    <button class="btn" id="scanBtn" onclick="startScan()">🔍 ｽｷｬﾝ</button>
+    <button class="btn" id="scanBtn" onclick="startScan()">🔍 スキャン</button>
     <button class="btn" onclick="refreshAll()">🔄 更新</button>
     <a href="settings.html" class="btn" style="text-decoration:none;display:inline-block">⚙️ 設定</a>
-    <button class="btn" onclick="clearCacheOnly()">🧹 ﾘﾛｰﾄﾞ</button>
+    <button class="btn" onclick="clearCacheOnly()">🧹 リロード</button>
   </div>
+</div>
+<div class="funds-bar">
+  <span style="color:#00e5a0;font-weight:800;font-size:16px">💰 資金: <span id="fundsDisplay">1000.00</span> USDT</span>
+  <button class="btn" onclick="resetSimulator()" style="margin-left:auto">🔄 リセット</button>
 </div>
 <div class="add-bar hidden" id="addBar">
   <input id="pairInput" placeholder="例: DOGE または DOGE-USDT" />
@@ -144,6 +149,37 @@ try {
   if (savedHistories) histories = JSON.parse(savedHistories);
 } catch(e) {}
 
+var SIM_INITIAL_FUNDS = 1000;
+var simFunds = SIM_INITIAL_FUNDS;
+try {
+  var savedFunds = localStorage.getItem("simFunds");
+  if (savedFunds) simFunds = parseFloat(savedFunds);
+} catch(e) {}
+
+var simTrades = [];
+try {
+  var savedTrades = localStorage.getItem("simTrades");
+  if (savedTrades) simTrades = JSON.parse(savedTrades);
+} catch(e) {}
+
+function saveFunds() { try { localStorage.setItem("simFunds", simFunds.toString()); } catch(e) {} }
+function saveTrades() { try { localStorage.setItem("simTrades", JSON.stringify(simTrades)); } catch(e) {} }
+
+function updateFundsDisplay() {
+  var el = document.getElementById("fundsDisplay");
+  if (el) el.textContent = simFunds.toFixed(2);
+}
+
+function resetSimulator() {
+  if (!confirm("資金を1000USDTに戻し、記録も全て消去します。よろしいですか？")) return;
+  simFunds = SIM_INITIAL_FUNDS;
+  simTrades = [];
+  saveFunds();
+  saveTrades();
+  updateFundsDisplay();
+  showToast("リセット完了", "資金と記録を初期化しました", "buy", 2000);
+}
+
 var positions = {};
 try {
   var savedPositions = localStorage.getItem("positions");
@@ -166,7 +202,19 @@ function openPosition(sym, dir, currentPrice) {
 }
 
 function closePosition(sym) {
+  var pos = positions[sym];
+  if (!pos) return;
   if (!confirm("ポジションをクローズしますか？")) return;
+  var currentPrice = window["_current_"+sym] ? window["_current_"+sym].price : pos.entryPrice;
+  var pnl = pos.dir==="ロング" ? (currentPrice-pos.entryPrice)*pos.qty : (pos.entryPrice-currentPrice)*pos.qty;
+  simFunds += pnl;
+  saveFunds();
+  updateFundsDisplay();
+  simTrades.unshift({
+    sym: sym, dir: pos.dir, entryPrice: pos.entryPrice, exitPrice: currentPrice,
+    qty: pos.qty, pnl: pnl, entryTime: pos.time, exitTime: new Date().toLocaleString("ja-JP")
+  });
+  saveTrades();
   delete positions[sym];
   savePositions();
   fetchAndUpdate(sym);
@@ -813,12 +861,12 @@ function fetchAndUpdate(sym) {
           "<div style='color:"+chgColor+";font-size:12px'>"+(change>=0?"▲":"▼")+" "+Math.abs(change).toFixed(2)+"% (24h)</div>"+
           positionBtnsHtml+
         "</div>"+
-          "<div style='text-align:right'>"+
+        "<div style='text-align:right'>"+
           "<div style='display:flex;align-items:center;gap:6px;justify-content:flex-end'>"+
             "<div class='price'>"+fmtPrice(price)+"</div>"+
             "<button class='x-btn' onclick='removePair(\""+sym+"\")'>✕</button>"+
           "</div>"+
-          "<div style='height:12px'></div>"+
+          "<div style='height:6px'></div>"+
           "<div style='display:flex;align-items:center;gap:6px;justify-content:flex-end'>"+
             "<div>"+
               "<div style='color:#ff69b4;font-size:12px'>TP: "+tp+" ("+tpLabel+")</div>"+
@@ -938,6 +986,7 @@ function scanNext() {
 }
 
 renderPopular();
+updateFundsDisplay();
 for(var i=0;i<pairs.length;i++){
   renderCard(pairs[i]);
   (function(sym,delay){ setTimeout(function(){ loadCard(sym); }, delay); })(pairs[i], i*3500);
