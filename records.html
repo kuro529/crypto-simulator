@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>📊 取引記録</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #07070f; color: #dde; font-family: -apple-system, sans-serif; min-height: 100vh; padding-bottom: 48px; }
+.header { display: flex; justify-content: space-between; align-items: center; padding: 18px 16px; border-bottom: 1px solid #12121f; position: sticky; top: 0; background: #07070f; z-index: 100; }
+.title { font-size: 18px; font-weight: 800; color: #fff; }
+.btn { padding: 6px 14px; border-radius: 8px; border: 1px solid #00e5a044; background: #00e5a010; color: #00e5a0; cursor: pointer; font-size: 13px; text-decoration: none; display: inline-block; }
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 16px; }
+.stat-box { background: #0d0d1a; border: 1px solid #12121f; border-radius: 10px; padding: 14px; text-align: center; }
+.stat-label { font-size: 11px; color: #888; margin-bottom: 4px; }
+.stat-value { font-size: 22px; font-weight: 800; color: #fff; }
+.trade-list { padding: 0 16px; }
+.trade-card { background: #0d0d1a; border: 1px solid #12121f; border-radius: 10px; padding: 12px; margin-bottom: 8px; }
+.trade-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.trade-sym { font-weight: 700; font-size: 14px; }
+.trade-pnl { font-weight: 800; font-size: 15px; }
+.trade-detail { font-size: 11px; color: #888; display: flex; justify-content: space-between; margin-bottom: 2px; }
+.empty { text-align: center; color: #444; padding: 40px; }
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="title">📊 取引記録</div>
+  <a href="index.html" class="btn">← 戻る</a>
+</div>
+
+<div class="stats-grid" id="statsGrid"></div>
+
+<div class="trade-list" id="tradeList"></div>
+
+<script>
+var simFunds = 1000;
+try {
+  var savedFunds = localStorage.getItem("simFunds");
+  if (savedFunds) simFunds = parseFloat(savedFunds);
+} catch(e) {}
+
+var simTrades = [];
+try {
+  var savedTrades = localStorage.getItem("simTrades");
+  if (savedTrades) simTrades = JSON.parse(savedTrades);
+} catch(e) {}
+
+function fmtPrice(p) {
+  if (p==null) return "-";
+  if (p>=10000) return p.toFixed(1);
+  if (p>=10) return p.toFixed(2);
+  if (p>=1) return p.toFixed(3);
+  if (p>=0.1) return p.toFixed(4);
+  if (p>=0.01) return p.toFixed(5);
+  return p.toFixed(6);
+}
+
+function renderStats() {
+  var totalTrades = simTrades.length;
+  var wins = simTrades.filter(function(t){ return t.pnl > 0; }).length;
+  var losses = simTrades.filter(function(t){ return t.pnl <= 0; }).length;
+  var winRate = totalTrades > 0 ? (wins/totalTrades*100).toFixed(1) : "0.0";
+  var totalPnl = simTrades.reduce(function(a,t){ return a+t.pnl; }, 0);
+  var pnlColor = totalPnl >= 0 ? "#00e5a0" : "#ff4d6d";
+  var fundsColor = simFunds >= 1000 ? "#00e5a0" : "#ff4d6d";
+
+  var html =
+    "<div class='stat-box'><div class='stat-label'>現在資金</div><div class='stat-value' style='color:"+fundsColor+"'>"+simFunds.toFixed(2)+"</div></div>"+
+    "<div class='stat-box'><div class='stat-label'>総損益</div><div class='stat-value' style='color:"+pnlColor+"'>"+(totalPnl>=0?"+":"")+totalPnl.toFixed(2)+"</div></div>"+
+    "<div class='stat-box'><div class='stat-label'>取引数</div><div class='stat-value'>"+totalTrades+"</div></div>"+
+    "<div class='stat-box'><div class='stat-label'>勝率</div><div class='stat-value'>"+winRate+"%</div></div>"+
+    "<div class='stat-box'><div class='stat-label'>勝ち</div><div class='stat-value' style='color:#00e5a0'>"+wins+"</div></div>"+
+    "<div class='stat-box'><div class='stat-label'>負け</div><div class='stat-value' style='color:#ff4d6d'>"+losses+"</div></div>";
+  document.getElementById("statsGrid").innerHTML = html;
+}
+
+function renderTrades() {
+  var list = document.getElementById("tradeList");
+  if (simTrades.length === 0) {
+    list.innerHTML = "<div class='empty'>まだ取引履歴がありません</div>";
+    return;
+  }
+  var html = "";
+  for (var i=0; i<simTrades.length; i++) {
+    var t = simTrades[i];
+    var pnlColor = t.pnl >= 0 ? "#00e5a0" : "#ff4d6d";
+    var dirColor = t.dir === "ロング" ? "#00e5a0" : "#ff4d6d";
+    html += "<div class='trade-card'>"+
+      "<div class='trade-header'>"+
+        "<span class='trade-sym'>"+t.sym.replace("-","/")+" <span style='color:"+dirColor+"'>"+t.dir+"</span></span>"+
+        "<span class='trade-pnl' style='color:"+pnlColor+"'>"+(t.pnl>=0?"+":"")+t.pnl.toFixed(2)+" USDT</span>"+
+      "</div>"+
+      "<div class='trade-detail'><span>エントリー</span><span>"+fmtPrice(t.entryPrice)+" ("+t.entryTime+")</span></div>"+
+      "<div class='trade-detail'><span>決済</span><span>"+fmtPrice(t.exitPrice)+" ("+t.exitTime+")</span></div>"+
+      "<div class='trade-detail'><span>数量</span><span>"+t.qty+"</span></div>"+
+    "</div>";
+  }
+  list.innerHTML = html;
+}
+
+renderStats();
+renderTrades();
+</script>
+</body>
+</html>
