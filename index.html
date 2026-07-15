@@ -169,13 +169,16 @@ function updateFundsDisplay() {
 }
 
 function resetSimulator() {
-  if (!confirm("資金を1000USDTに戻し、記録も全て消去します。よろしいですか？")) return;
+  if (!confirm("資金を1000USDTに戻し、記録とポジションも全て消去します。よろしいですか？")) return;
   simFunds = SIM_INITIAL_FUNDS;
   simTrades = [];
+  positions = {};
   saveFunds();
   saveTrades();
+  savePositions();
   updateFundsDisplay();
-  showToast("リセット完了", "資金と記録を初期化しました", "buy", 2000);
+  refreshAll();
+  showToast("リセット完了", "資金・記録・ポジションを初期化しました", "buy", 2000);
 }
 
 var positions = {};
